@@ -1,16 +1,11 @@
-{% extends "registration/base.html" %}
-
-{% block title %}Registration Complete | Student Management{% endblock %}
-
-{% block content %}
-<section class="content-card success-card">
-    <div class="success-mark" aria-hidden="true">✓</div>
-    <p class="eyebrow">Registration complete</p>
-    <h1>Student registered successfully</h1>
-    <p class="text-secondary">The student record has been saved.</p>
-    <div class="d-flex flex-wrap gap-2 mt-4">
-        <a class="btn btn-primary rounded-pill px-4" href="{% url 'student_list' %}">View Student Directory</a>
-        <a class="btn btn-outline-secondary rounded-pill px-4" href="{% url 'student_registration' %}">Register Another Student</a>
-    </div>
-</section>
-{% endblock %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Registration complete</title>
+</head>
+<body>
+    <h1>Registration complete</h1>
+    <p>The student has been registered successfully.</p>
+</body>
+</html>
