@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -10,7 +11,11 @@
         <a href="{% url 'home' %}">
             Go to landing Page
         </a>
+        <nav>
+            <a href="{% url 'student_registration' %}">Register Student</a>
+            <a href="{% url 'login' %}">Staff Login</a>
+            <a href="{% url 'student_list' %}">Student Directory</a>
+        </nav>
 
-        
     </body>
 </html>

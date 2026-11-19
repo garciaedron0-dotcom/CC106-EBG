@@ -1,24 +1,34 @@
+
 """
 URL configuration for student_management project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
+from registration.views import StaffLoginView
 
 urlpatterns = [
+    # Django Admin
     path('admin/', admin.site.urls),
-    path('',include('home.urls')),
+
+    # Existing Home pages
+    path('', include('home.urls')),
+
+    # Module 08 - Staff Login
+    path(
+        'login/',
+        StaffLoginView.as_view(),
+        name='login'
+    ),
+
+    # Module 08 - Staff Logout
+    path(
+        'logout/',
+        auth_views.LogoutView.as_view(),
+        name='logout'
+    ),
+
+    # Existing Registration pages
     path('registration/', include('registration.urls')),
 ]

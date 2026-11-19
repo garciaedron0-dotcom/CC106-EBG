@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
@@ -7,6 +8,12 @@ from .models import student
 
 class StudentRegistrationTests(TestCase):
     def setUp(self):
+        self.staff = get_user_model().objects.create_user(
+            username="staff",
+            password="TestPassword123!",
+            is_staff=True,
+        )
+        self.client.force_login(self.staff)
         self.student = student.objects.create(
             student_id="TEST-001",
             first_name="Alex",
@@ -15,6 +22,18 @@ class StudentRegistrationTests(TestCase):
             date_of_birth="2005-04-12",
             contact_number="09170000001",
         )
+
+    def test_staff_login_redirects_to_welcome_dashboard_even_with_directory_next_url(self):
+        self.client.logout()
+        response = self.client.post(
+            reverse("login"),
+            {
+                "username": "staff",
+                "password": "TestPassword123!",
+                "next": reverse("student_list"),
+            },
+        )
+        self.assertRedirects(response, reverse("staff_dashboard"))
 
     def test_module_six_pages_and_registration_aliases_remain_available(self):
         for url in (
@@ -28,7 +47,41 @@ class StudentRegistrationTests(TestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 200)
 
+    def test_staff_dashboard_welcomes_staff_and_links_to_student_pages(self):
+        response = self.client.get(reverse("staff_dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"Welcome, Staff {self.staff.username}!")
+        self.assertContains(response, reverse("student_registration"))
+        self.assertContains(response, reverse("student_list"))
+        self.assertContains(response, reverse("logout"))
+
+    def test_non_staff_cannot_open_dashboard_or_student_directory(self):
+        non_staff = get_user_model().objects.create_user(
+            username="student-user",
+            password="TestPassword123!",
+        )
+        self.client.force_login(non_staff)
+
+        for url in (reverse("staff_dashboard"), reverse("student_list")):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 302)
+                self.assertIn(reverse("login"), response["Location"])
+
+    def test_student_registration_remains_public(self):
+        self.client.logout()
+        response = self.client.get(reverse("student_registration"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_home_pages_link_to_registration_and_directory(self):
+        for url in (reverse("landing"), reverse("home")):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertContains(response, reverse("student_registration"))
+                self.assertContains(response, reverse("student_list"))
+
     def test_original_registration_post_still_creates_a_student(self):
+        self.client.logout()
         response = self.client.post(
             reverse("student_registration"),
             {
@@ -134,6 +187,7 @@ class StudentRegistrationTests(TestCase):
         from django.test import Client
 
         client = Client(enforce_csrf_checks=True)
+        client.force_login(self.staff)
         confirmation_url = reverse("student_delete", args=[self.student.pk])
         response = client.get(confirmation_url)
         self.assertEqual(response.status_code, 200)

@@ -1,12 +1,40 @@
+
 from django.contrib import messages
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from .forms import StudentForm
 from .models import student
 
 
+# Check if user is an authenticated staff member
+def staff_check(user):
+    return user.is_authenticated and user.is_staff
+
+
+class StaffLoginView(LoginView):
+    template_name = "login.html"
+
+    def get_success_url(self):
+        if self.request.user.is_staff:
+            return reverse("staff_dashboard")
+        return reverse("login")
+
+
+# Staff Dashboard
+@user_passes_test(staff_check, login_url='login')
+def staff_dashboard(request):
+    return render(
+        request,
+        'registration/dashboard.html'
+    )
+
+
+# Public Student Registration
 def student_registration(request):
     form = StudentForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -21,6 +49,8 @@ def registration_success(request):
     return render(request, "registration/success.html")
 
 
+# Staff-only Student Directory
+@user_passes_test(staff_check, login_url='login')
 def student_list(request):
     query = request.GET.get("q", "").strip()
     students = student.objects.all().order_by("last_name", "first_name", "student_id")
@@ -38,6 +68,8 @@ def student_list(request):
     )
 
 
+# Staff-only Student Details
+@user_passes_test(staff_check, login_url='login')
 def student_detail(request, pk):
     student_record = get_object_or_404(student, pk=pk)
     return render(
@@ -47,6 +79,8 @@ def student_detail(request, pk):
     )
 
 
+# Staff-only Student Creation
+@user_passes_test(staff_check, login_url='login')
 def student_create(request):
     form = StudentForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -57,6 +91,8 @@ def student_create(request):
     return render(request, "registration/student_form.html", {"form": form})
 
 
+# Staff-only Student Update
+@user_passes_test(staff_check, login_url='login')
 def student_update(request, pk):
     student_record = get_object_or_404(student, pk=pk)
     form = StudentForm(request.POST or None, instance=student_record)
@@ -72,6 +108,8 @@ def student_update(request, pk):
     )
 
 
+# Staff-only Student Deletion
+@user_passes_test(staff_check, login_url='login')
 @require_http_methods(["GET", "POST"])
 def student_delete(request, pk):
     student_record = get_object_or_404(student, pk=pk)
