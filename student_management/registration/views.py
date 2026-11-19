@@ -28,9 +28,38 @@ class StaffLoginView(LoginView):
 # Staff Dashboard
 @user_passes_test(staff_check, login_url='login')
 def staff_dashboard(request):
+    total_students = student.objects.count()
+    male_students = student.objects.filter(gender__in=("M", "Male")).count()
+    female_students = student.objects.filter(gender__in=("F", "Female")).count()
+
+    if total_students:
+        male_percent = round((male_students / total_students) * 100, 1)
+        female_percent = round((female_students / total_students) * 100, 1)
+    else:
+        male_percent = 0
+        female_percent = 0
+
+    query = request.GET.get("q", "").strip()
+    students = student.objects.all().order_by("last_name", "first_name", "student_id")
+    if query:
+        students = students.filter(
+            Q(student_id__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+        )
+
     return render(
         request,
-        'registration/dashboard.html'
+        'registration/dashboard.html',
+        {
+            "total_students": total_students,
+            "male_students": male_students,
+            "female_students": female_students,
+            "male_percent": male_percent,
+            "female_percent": female_percent,
+            "students": students,
+            "query": query,
+        },
     )
 
 
